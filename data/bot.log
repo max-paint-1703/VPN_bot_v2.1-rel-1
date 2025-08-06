@@ -1,0 +1,68 @@
+2025-08-06 16:01:11,193 - __main__ - INFO - Доступно конфигов: 6
+2025-08-06 16:01:11,194 - __main__ - INFO - Бот запускается...
+2025-08-06 16:01:11,396 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getMe "HTTP/1.1 200 OK"
+2025-08-06 16:01:11,457 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/deleteWebhook "HTTP/1.1 200 OK"
+2025-08-06 16:01:11,459 - telegram.ext.Application - INFO - Application started
+2025-08-06 16:01:21,638 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:01:31,694 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:01:41,751 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:01:50,276 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:01:51,545 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:01:51,628 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:01:51,630 - __main__ - INFO - Пользователь 1360007945 запустил бота
+2025-08-06 16:01:51,893 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/sendMessage "HTTP/1.1 200 OK"
+2025-08-06 16:01:56,375 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:01:56,465 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/sendMessage "HTTP/1.1 200 OK"
+2025-08-06 16:02:00,238 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:02:00,345 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/sendMessage "HTTP/1.1 200 OK"
+2025-08-06 16:02:01,908 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:02:01,916 - __main__ - INFO - Доступно конфигов: 6
+2025-08-06 16:02:02,026 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/sendMessage "HTTP/1.1 200 OK"
+2025-08-06 16:02:02,124 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/sendMessage "HTTP/1.1 200 OK"
+2025-08-06 16:02:03,147 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:02:03,234 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/answerCallbackQuery "HTTP/1.1 200 OK"
+2025-08-06 16:02:03,431 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/sendDocument "HTTP/1.1 200 OK"
+2025-08-06 16:02:03,561 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getChat "HTTP/1.1 200 OK"
+2025-08-06 16:02:03,706 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/editMessageText "HTTP/1.1 200 OK"
+2025-08-06 16:02:13,205 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:02:22,347 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:02:22,348 - __main__ - INFO - Быстрая выдача запрошена пользователем 1360007945 через /getfast
+2025-08-06 16:02:22,528 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/sendChatAction "HTTP/1.1 200 OK"
+2025-08-06 16:02:22,533 - __main__ - INFO - Доступно конфигов: 5
+2025-08-06 16:02:22,636 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/sendDocument "HTTP/1.1 200 OK"
+2025-08-06 16:02:22,643 - __main__ - ERROR - Ошибка быстрой выдачи: add_issued_config() got an unexpected keyword argument 'issue_type'
+2025-08-06 16:02:22,733 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/sendMessage "HTTP/1.1 200 OK"
+2025-08-06 16:02:29,925 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:02:29,927 - __main__ - INFO - Запрос списка от пользователя 1360007945
+2025-08-06 16:02:29,941 - __main__ - INFO - Отображение страницы 1, записей: 1
+2025-08-06 16:02:29,941 - __main__ - ERROR - Ошибка при отображении списка: not enough values to unpack (expected 8, got 7)
+2025-08-06 16:02:30,161 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/sendMessage "HTTP/1.1 200 OK"
+2025-08-06 16:02:39,996 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:02:50,056 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:03:00,116 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:03:10,173 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:03:20,232 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:03:30,293 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:03:40,345 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:03:50,400 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:04:00,457 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:04:10,518 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:04:20,574 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:04:30,633 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:04:40,685 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:04:50,739 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:05:00,793 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:05:10,846 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:05:20,900 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:05:30,954 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:05:41,007 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:05:51,064 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:06:01,117 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:06:11,169 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:06:21,222 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:06:31,277 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:06:41,329 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:06:51,387 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:07:01,447 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8098380176:AAF8k_0W0R6MRQ4YiYUyjiVphGQsblpeJRQ/getUpdates "HTTP/1.1 200 OK"
+2025-08-06 16:07:05,747 - telegram.ext.Application - INFO - Application is stopping. This might take a moment.
+2025-08-06 16:07:05,747 - telegram.ext.Application - INFO - Application.stop() complete

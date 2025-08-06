@@ -69,7 +69,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Я бот для выдачи конфигураций WireGuard VPN\n\n"
         "⚠️ Для работы бота необходимо:\n"
         "1. Начать приватный чат со мной (@KaratVpn_bot)\n"
-        "2. Не блокировать бота",
+        "2. Не блокировать бота\n\n"
+        "Доступные команды:\n"
+        "/get - запросить конфиг (стандартная процедура)\n"
+        "/getfast - быстрая выдача (для менеджеров)",
         reply_markup=reply_markup
     )
 
@@ -80,7 +83,8 @@ async def request_config(update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
         await query.answer()
         user = query.from_user
-        await query.edit_message_text("Введите ваше ФИО:")
+        chat_id = query.message.chat_id
+        await context.bot.send_message(chat_id=chat_id, text="Введите ваше ФИО:")
     else:
         user = update.message.from_user
         await update.message.reply_text("Введите ваше ФИО:")
@@ -166,7 +170,7 @@ async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TY
         
         request_data = pending_requests.get(user_id)
         if not request_data:
-            await query.message.reply_text("⚠️ Запрос не найден или уже обработан")
+            await query.edit_message_text("⚠️ Запрос не найден или уже обработан")
             return
         
         config_file = request_data['config_file']
@@ -179,11 +183,14 @@ async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TY
             
             try:
                 # Отправка конфига пользователю
-                await context.bot.send_document(
-                    chat_id=user_id,
-                    document=open(src_path, 'rb'),
-                    caption=f"✅ Ваш конфиг: {config_file}"
-                )
+                with open(src_path, 'rb') as file:
+                    await context.bot.send_document(
+                        chat_id=user_id,
+                        document=file,
+                        caption=f"✅ Ваш конфиг: {config_file}"
+                    )
+                
+                # Перемещение файла только после успешной отправки
                 shutil.move(src_path, dest_path)
                 
                 # Запись в базу данных
@@ -192,14 +199,14 @@ async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TY
                 db.add_issued_config(user_id, username, full_name, organization, config_file)
                 
                 # Уведомление администратора
-                await query.message.reply_text(
+                await query.edit_message_text(
                     f"✅ Конфиг {config_file} выдан пользователю ID: {user_id}\n"
                     f"👤 ФИО: {full_name}\n"
                     f"🏢 Организация: {organization}"
                 )
             except Exception as e:
                 logger.error(f"Ошибка выдачи конфига {user_id}: {e}")
-                await query.message.reply_text(f"🚫 Ошибка выдачи конфига: {e}")
+                await query.edit_message_text(f"🚫 Ошибка выдачи конфига: {e}")
             finally:
                 if user_id in pending_requests:
                     del pending_requests[user_id]
@@ -213,13 +220,13 @@ async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TY
             except Exception as e:
                 logger.error(f"Не удалось уведомить пользователя {user_id}: {e}")
             
-            await query.message.reply_text(f"❌ Запрос пользователя ID: {user_id} отклонён")
+            await query.edit_message_text(f"❌ Запрос пользователя ID: {user_id} отклонён")
             if user_id in pending_requests:
                 del pending_requests[user_id]
     
     except Exception as e:
         logger.error(f"Ошибка в обработке callback: {e}")
-        await query.message.reply_text("⚠️ Ошибка при обработке запроса")
+        await query.edit_message_text("⚠️ Ошибка при обработке запроса")
 
 async def list_issued(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Команда для вывода списка выданных конфигов"""
@@ -229,6 +236,7 @@ async def list_issued(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # Сброс состояния
     context.user_data['list_page'] = 0
+    context.user_data['awaiting_delete_id'] = False
     await show_list_page(update, context)
 
 async def show_list_page(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -245,10 +253,10 @@ async def show_list_page(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     message = f"📋 Список выданных конфигов (страница {page + 1}):\n\n"
-    for i, config in enumerate(configs, start=1):
+    for config in configs:
         record_id, user_id, username, full_name, organization, config_file, issue_time, issue_type = config
         message += (
-            f"🔹 #{record_id}\n"
+            f"🔹 ID: {record_id}\n"
             f"👤 Пользователь: @{username or 'N/A'} (ID: {user_id})\n"
             f"👨‍💼 ФИО: {full_name}\n"
             f"🏢 Организация: {organization}\n"
@@ -276,7 +284,13 @@ async def show_list_page(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await update.message.reply_text(message, reply_markup=reply_markup)
+    # Если это ответ на callback, редактируем сообщение, иначе отправляем новое
+    if update.callback_query:
+        query = update.callback_query
+        await query.answer()
+        await query.edit_message_text(text=message, reply_markup=reply_markup)
+    else:
+        await update.message.reply_text(text=message, reply_markup=reply_markup)
 
 async def handle_list_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработка действий в списке"""
@@ -291,15 +305,22 @@ async def handle_list_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     elif action == "list_next":
         context.user_data['list_page'] = page + 1
     elif action == "delete_record":
-        await query.message.reply_text("Введите ID записи для удаления:")
         context.user_data['awaiting_delete_id'] = True
+        await query.message.reply_text("Введите ID записи для удаления:")
         return
     
     await show_list_page(update, context)
 
 async def handle_delete_record(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработка удаления записи"""
+    # Проверяем, ожидаем ли мы ID для удаления
     if not context.user_data.get('awaiting_delete_id', False):
+        return
+    
+    # Проверяем, что команда от администратора
+    if update.message.from_user.id != ADMIN_ID:
+        await update.message.reply_text("⚠️ Удаление записей доступно только администратору")
+        context.user_data['awaiting_delete_id'] = False
         return
     
     try:
@@ -308,16 +329,20 @@ async def handle_delete_record(update: Update, context: ContextTypes.DEFAULT_TYP
         
         if not config_data:
             await update.message.reply_text("⚠️ Запись с таким ID не найдена")
+            context.user_data['awaiting_delete_id'] = False
             return
         
         db.delete_issued_config(record_id)
         await update.message.reply_text(f"✅ Запись #{record_id} успешно удалена")
+        context.user_data['awaiting_delete_id'] = False
         
         # Обновляем список
-        context.user_data['awaiting_delete_id'] = False
         await show_list_page(update, context)
     except ValueError:
         await update.message.reply_text("⚠️ Пожалуйста, введите числовой ID записи")
+    except Exception as e:
+        logger.error(f"Ошибка при удалении записи: {e}")
+        await update.message.reply_text("⚠️ Произошла ошибка при удалении записи")
 
 async def get_fast(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Скрытая команда для быстрой выдачи конфига без верификации"""
@@ -401,7 +426,6 @@ def main():
     # Регистрация обработчиков
     conv_handler = ConversationHandler(
         entry_points=[
-            CommandHandler('get_config', request_config),
             CommandHandler('get', get_command),  # Обработчик для /get
             CallbackQueryHandler(request_config, pattern='^request_config$')
         ],
@@ -415,7 +439,7 @@ def main():
     application.add_handler(conv_handler)
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("list", list_issued))
-    application.add_handler(CommandHandler("getfast", get_fast))  # Исправленный обработчик
+    application.add_handler(CommandHandler("getfast", get_fast))
     application.add_handler(CallbackQueryHandler(handle_admin_callback, pattern='^approve_|^reject_'))
     application.add_handler(CallbackQueryHandler(handle_list_callback, pattern='^list_|^delete_record'))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_delete_record))
@@ -424,7 +448,7 @@ def main():
     configs = check_configs()
     if not configs:
         logger.warning("Нет доступных конфигов!")
-        # Используем context для уведомления администратора
+        # Используем create_task для асинхронного уведомления
         application.create_task(notify_admin(application, "⚠️ ВНИМАНИЕ! На старте нет доступных конфигов!"))
     
     # Запуск бота

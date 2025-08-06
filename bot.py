@@ -6,8 +6,7 @@ from dotenv import load_dotenv
 from telegram import (
     Update,
     InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    ReplyKeyboardMarkup
+    InlineKeyboardMarkup
 )
 from telegram.ext import (
     Application,
@@ -23,7 +22,7 @@ import database as db
 # Загрузка переменных окружения
 load_dotenv()
 TOKEN = os.getenv('TOKEN')
-ADMIN_ID = int(os.getenv('ADMIN_ID'))  # Преобразуем в int
+ADMIN_ID = int(os.getenv('ADMIN_ID'))
 
 # Пути к директориям
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -43,8 +42,8 @@ logger = logging.getLogger(__name__)
 FIO, ORG = range(2)
 
 # Глобальные структуры данных
-pending_requests = {}  # user_id: {'config_file': str, 'full_name': str, 'organization': str}
-list_state = {}        # Для хранения состояния списка
+pending_requests = {}
+list_state = {}
 
 def check_configs():
     """Проверка наличия доступных конфигов"""
@@ -70,17 +69,27 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Я бот для выдачи конфигураций WireGuard VPN\n\n"
         "⚠️ Для работы бота необходимо:\n"
         "1. Начать приватный чат со мной (@KaratVpn_bot)\n"
-        "2. Не блокировать бота\n"
-        "3. Ожидать подтверждения администратора",
+        "2. Не блокировать бота",
         reply_markup=reply_markup
     )
 
 async def request_config(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработка нажатия кнопки 'Запросить конфиг'"""
-    query = update.callback_query
-    await query.answer()
-    await query.edit_message_text("Введите ваше ФИО:")
+    """Обработка запроса конфига (для кнопки и команды /get)"""
+    # Определяем источник запроса
+    if update.callback_query:
+        query = update.callback_query
+        await query.answer()
+        user = query.from_user
+        await query.edit_message_text("Введите ваше ФИО:")
+    else:
+        user = update.message.from_user
+        await update.message.reply_text("Введите ваше ФИО:")
+    
     return FIO
+
+async def get_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Обработчик команды /get"""
+    return await request_config(update, context)
 
 async def get_fio(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Получение ФИО от пользователя"""
@@ -237,14 +246,15 @@ async def show_list_page(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     message = f"📋 Список выданных конфигов (страница {page + 1}):\n\n"
     for i, config in enumerate(configs, start=1):
-        record_id, user_id, username, full_name, organization, config_file, issue_time = config
+        record_id, user_id, username, full_name, organization, config_file, issue_time, issue_type = config
         message += (
             f"🔹 #{record_id}\n"
             f"👤 Пользователь: @{username or 'N/A'} (ID: {user_id})\n"
             f"👨‍💼 ФИО: {full_name}\n"
             f"🏢 Организация: {organization}\n"
             f"🔑 Конфиг: {config_file}\n"
-            f"🕒 Время выдачи: {issue_time}\n\n"
+            f"🕒 Время выдачи: {issue_time}\n"
+            f"⚡️ Тип: {'Быстрая выдача' if issue_type == 'fast' else 'Стандартная'}\n\n"
         )
     
     # Создаем клавиатуру для навигации
@@ -309,68 +319,70 @@ async def handle_delete_record(update: Update, context: ContextTypes.DEFAULT_TYP
     except ValueError:
         await update.message.reply_text("⚠️ Пожалуйста, введите числовой ID записи")
 
-async def force_issue(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Мастер-выдача конфига без верификации"""
-    if update.message.from_user.id != ADMIN_ID:
-        await update.message.reply_text("⚠️ Эта команда доступна только администратору")
+async def get_fast(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Скрытая команда для быстрой выдачи конфига без верификации"""
+    user = update.message.from_user
+    logger.info(f"Быстрая выдача запрошена пользователем {user.id} через /getfast")
+    
+    # Проверка доступности чата
+    try:
+        await context.bot.send_chat_action(chat_id=user.id, action='typing')
+    except Exception as e:
+        logger.error(f"Чат с пользователем {user.id} недоступен: {e}")
+        await update.message.reply_text("⚠️ Для получения конфига необходимо начать приватный чат с ботом.")
         return
     
     configs = check_configs()
     if not configs:
-        await update.message.reply_text("⚠️ Нет доступных конфигов!")
+        await update.message.reply_text("⚠️ Все ключи временно закончились!")
         return
     
     config_file = configs[0]
-    context.user_data['force_issue_config'] = config_file
-    await update.message.reply_text("Введите username пользователя (без @):")
-
-async def handle_force_issue_username(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработка username для мастер-выдачи"""
-    username = update.message.text.strip()
-    config_file = context.user_data.get('force_issue_config')
-    
-    if not config_file:
-        await update.message.reply_text("⚠️ Ошибка: данные конфига утеряны. Начните заново.")
-        return
+    src_path = os.path.join(AVAILABLE_DIR, config_file)
+    dest_path = os.path.join(USED_DIR, config_file)
     
     try:
-        # Получаем данные пользователя
-        user = await context.bot.get_chat(f"@{username}")
+        # Отправка конфига с использованием контекстного менеджера
+        with open(src_path, 'rb') as file:
+            await context.bot.send_document(
+                chat_id=user.id,
+                document=file,
+                caption=f"⚡️ Ваш конфиг (быстрая выдача): {config_file}"
+            )
         
-        src_path = os.path.join(AVAILABLE_DIR, config_file)
-        dest_path = os.path.join(USED_DIR, config_file)
-        
-        # Отправка конфига пользователю
-        await context.bot.send_document(
-            chat_id=user.id,
-            document=open(src_path, 'rb'),
-            caption=f"✅ Ваш конфиг: {config_file}"
-        )
+        # Перемещение файла только после успешной отправки
         shutil.move(src_path, dest_path)
         
         # Запись в базу данных
+        username = f"@{user.username}" if user.username else None
         db.add_issued_config(
             user.id, 
             username, 
-            "Выдан администратором", 
-            "Мастер-выдача", 
-            config_file
+            "Быстрая выдача", 
+            "Не указана", 
+            config_file,
+            issue_type="fast"
         )
         
         # Уведомление администратора
-        await update.message.reply_text(
-            f"✅ Конфиг {config_file} выдан пользователю @{username}\n"
-            f"🔹 Использована мастер-выдача"
-        )
-        
-        # Отправка уведомления в чат администратора
+        username_display = username if username else f"ID: {user.id}"
         await notify_admin(
             context, 
-            f"🔑 Мастер-выдача: конфиг {config_file} выдан @{username}"
+            f"⚡️ Быстрая выдача по команде /getfast!\n"
+            f"🔑 Конфиг: {config_file}\n"
+            f"👤 Пользователь: {username_display}\n"
+            f"🕒 Время: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        )
+        
+        await update.message.reply_text(
+            f"✅ Конфиг {config_file} успешно выдан!\n"
+            "Администратор уведомлен о выдаче."
         )
     except Exception as e:
-        logger.error(f"Ошибка мастер-выдачи: {e}")
-        await update.message.reply_text(f"⚠️ Ошибка: {e}")
+        logger.error(f"Ошибка быстрой выдачи: {e}")
+        await update.message.reply_text(
+            "⚠️ Не удалось выдать конфиг. Попробуйте позже или обратитесь к администратору."
+        )
 
 async def notify_admin(context: ContextTypes.DEFAULT_TYPE, message: str):
     """Уведомление администратора"""
@@ -390,6 +402,7 @@ def main():
     conv_handler = ConversationHandler(
         entry_points=[
             CommandHandler('get_config', request_config),
+            CommandHandler('get', get_command),  # Обработчик для /get
             CallbackQueryHandler(request_config, pattern='^request_config$')
         ],
         states={
@@ -402,17 +415,17 @@ def main():
     application.add_handler(conv_handler)
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("list", list_issued))
-    application.add_handler(CommandHandler("force_issue", force_issue))
+    application.add_handler(CommandHandler("getfast", get_fast))  # Исправленный обработчик
     application.add_handler(CallbackQueryHandler(handle_admin_callback, pattern='^approve_|^reject_'))
     application.add_handler(CallbackQueryHandler(handle_list_callback, pattern='^list_|^delete_record'))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_force_issue_username))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_delete_record))
     
     # Проверка начальных условий
     configs = check_configs()
     if not configs:
         logger.warning("Нет доступных конфигов!")
-        notify_admin(application, "⚠️ ВНИМАНИЕ! На старте нет доступных конфигов!")
+        # Используем context для уведомления администратора
+        application.create_task(notify_admin(application, "⚠️ ВНИМАНИЕ! На старте нет доступных конфигов!"))
     
     # Запуск бота
     logger.info("Бот запускается...")

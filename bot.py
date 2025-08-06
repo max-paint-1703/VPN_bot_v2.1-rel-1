@@ -239,59 +239,6 @@ async def list_issued(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['awaiting_delete_id'] = False
     await show_list_page(update, context)
 
-async def show_list_page(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Отображение страницы списка"""
-    page = context.user_data.get('list_page', 0)
-    limit = 5
-    offset = page * limit
-    
-    configs = db.get_issued_configs(limit, offset)
-    total_count = db.count_issued_configs()
-    
-    if not configs and page == 0:
-        await update.message.reply_text("📭 Список выданных конфигов пуст")
-        return
-    
-    message = f"📋 Список выданных конфигов (страница {page + 1}):\n\n"
-    for config in configs:
-        record_id, user_id, username, full_name, organization, config_file, issue_time, issue_type = config
-        message += (
-            f"🔹 ID: {record_id}\n"
-            f"👤 Пользователь: @{username or 'N/A'} (ID: {user_id})\n"
-            f"👨‍💼 ФИО: {full_name}\n"
-            f"🏢 Организация: {organization}\n"
-            f"🔑 Конфиг: {config_file}\n"
-            f"🕒 Время выдачи: {issue_time}\n"
-            f"⚡️ Тип: {'Быстрая выдача' if issue_type == 'fast' else 'Стандартная'}\n\n"
-        )
-    
-    # Создаем клавиатуру для навигации
-    keyboard = []
-    
-    # Кнопка "Удалить"
-    if configs:
-        keyboard.append([InlineKeyboardButton("❌ Удалить запись", callback_data="delete_record")])
-    
-    # Кнопки навигации
-    nav_buttons = []
-    if page > 0:
-        nav_buttons.append(InlineKeyboardButton("⬅️ Назад", callback_data="list_prev"))
-    if offset + limit < total_count:
-        nav_buttons.append(InlineKeyboardButton("Вперед ➡️", callback_data="list_next"))
-    
-    if nav_buttons:
-        keyboard.append(nav_buttons)
-    
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    # Если это ответ на callback, редактируем сообщение, иначе отправляем новое
-    if update.callback_query:
-        query = update.callback_query
-        await query.answer()
-        await query.edit_message_text(text=message, reply_markup=reply_markup)
-    else:
-        await update.message.reply_text(text=message, reply_markup=reply_markup)
-
 async def handle_list_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработка действий в списке"""
     query = update.callback_query
@@ -399,15 +346,100 @@ async def get_fast(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🕒 Время: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         )
         
-        await update.message.reply_text(
-            f"✅ Конфиг {config_file} успешно выдан!\n"
-            "Администратор уведомлен о выдаче."
+        # Успешное сообщение отправляем через отдельный запрос
+        await context.bot.send_message(
+            chat_id=user.id,
+            text=f"✅ Конфиг {config_file} успешно выдан!\n"
+                 "Администратор уведомлен о выдаче."
         )
+        
     except Exception as e:
         logger.error(f"Ошибка быстрой выдачи: {e}")
         await update.message.reply_text(
             "⚠️ Не удалось выдать конфиг. Попробуйте позже или обратитесь к администратору."
         )
+
+async def list_issued(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Команда для вывода списка выданных конфигов"""
+    try:
+        logger.info(f"Запрос списка от пользователя {update.message.from_user.id}")
+        
+        if update.message.from_user.id != ADMIN_ID:
+            await update.message.reply_text("⚠️ Эта команда доступна только администратору")
+            return
+        
+        # Сброс состояния
+        context.user_data['list_page'] = 0
+        context.user_data['awaiting_delete_id'] = False
+        await show_list_page(update, context)
+        
+    except Exception as e:
+        logger.error(f"Ошибка в команде /list: {e}")
+        await update.message.reply_text("⚠️ Произошла ошибка при обработке команды")
+
+async def show_list_page(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Отображение страницы списка"""
+    try:
+        page = context.user_data.get('list_page', 0)
+        limit = 5
+        offset = page * limit
+        
+        configs = db.get_issued_configs(limit, offset)
+        total_count = db.count_issued_configs()
+        
+        logger.info(f"Отображение страницы {page+1}, записей: {len(configs)}")
+        
+        if not configs and page == 0:
+            await update.message.reply_text("📭 Список выданных конфигов пуст")
+            return
+        
+        message = f"📋 Список выданных конфигов (страница {page + 1}):\n\n"
+        for config in configs:
+            record_id, user_id, username, full_name, organization, config_file, issue_time, issue_type = config
+            message += (
+                f"🔹 ID: {record_id}\n"
+                f"👤 Пользователь: @{username or 'N/A'} (ID: {user_id})\n"
+                f"👨‍💼 ФИО: {full_name}\n"
+                f"🏢 Организация: {organization}\n"
+                f"🔑 Конфиг: {config_file}\n"
+                f"🕒 Время выдачи: {issue_time}\n"
+                f"⚡️ Тип: {'Быстрая выдача' if issue_type == 'fast' else 'Стандартная'}\n\n"
+            )
+        
+        # Создаем клавиатуру для навигации
+        keyboard = []
+        
+        # Кнопка "Удалить"
+        if configs:
+            keyboard.append([InlineKeyboardButton("❌ Удалить запись", callback_data="delete_record")])
+        
+        # Кнопки навигации
+        nav_buttons = []
+        if page > 0:
+            nav_buttons.append(InlineKeyboardButton("⬅️ Назад", callback_data="list_prev"))
+        if offset + limit < total_count:
+            nav_buttons.append(InlineKeyboardButton("Вперед ➡️", callback_data="list_next"))
+        
+        if nav_buttons:
+            keyboard.append(nav_buttons)
+        
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        # Отправка сообщения
+        if update.callback_query:
+            await update.callback_query.edit_message_text(
+                text=message,
+                reply_markup=reply_markup
+            )
+        else:
+            await update.message.reply_text(
+                text=message,
+                reply_markup=reply_markup
+            )
+            
+    except Exception as e:
+        logger.error(f"Ошибка при отображении списка: {e}")
+        await update.message.reply_text("⚠️ Произошла ошибка при формировании списка")
 
 async def notify_admin(context: ContextTypes.DEFAULT_TYPE, message: str):
     """Уведомление администратора"""

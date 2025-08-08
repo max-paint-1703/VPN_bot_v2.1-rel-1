@@ -29,6 +29,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 AVAILABLE_DIR = os.path.join(BASE_DIR, 'configs', 'available')
 USED_DIR = os.path.join(BASE_DIR, 'configs', 'used')
 LOG_FILE = os.path.join(BASE_DIR, 'data', 'bot.log')
+ADMINS_FILE = os.path.join(BASE_DIR, 'data', 'admins.txt')  # Файл со списком администраторов
 
 # Настройка логирования
 logging.basicConfig(
@@ -40,10 +41,50 @@ logger = logging.getLogger(__name__)
 
 # Состояния для ConversationHandler
 FIO, ORG = range(2)
+GRANT_ADMIN = range(1)  # Состояние для выдачи прав администратора
 
 # Глобальные структуры данных
 pending_requests = {}
 list_state = {}
+
+# Функции для работы с администраторами
+def init_admins():
+    """Инициализация файла администраторов"""
+    try:
+        if not os.path.exists(ADMINS_FILE):
+            with open(ADMINS_FILE, 'w') as f:
+                f.write(str(ADMIN_ID) + '\n')  # Добавляем основного администратора
+            logger.info("Файл администраторов создан")
+    except Exception as e:
+        logger.error(f"Ошибка инициализации файла администраторов: {e}")
+
+def is_admin(user_id):
+    """Проверка, является ли пользователь администратором"""
+    try:
+        if not os.path.exists(ADMINS_FILE):
+            return False
+            
+        with open(ADMINS_FILE, 'r') as f:
+            admins = [line.strip() for line in f.readlines()]
+            return str(user_id) in admins
+    except Exception as e:
+        logger.error(f"Ошибка проверки прав администратора: {e}")
+        return False
+
+def add_admin(user_id):
+    """Добавление администратора"""
+    try:
+        # Проверяем, не является ли уже администратором
+        if is_admin(user_id):
+            return False
+            
+        with open(ADMINS_FILE, 'a') as f:
+            f.write(str(user_id) + '\n')
+        logger.info(f"Добавлен администратор: {user_id}")
+        return True
+    except Exception as e:
+        logger.error(f"Ошибка добавления администратора: {e}")
+        return False
 
 def check_configs():
     """Проверка наличия доступных конфигов"""
@@ -64,15 +105,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [[InlineKeyboardButton("🔑 Запросить конфиг", callback_data='request_config')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
+    # Обновлённое приветственное сообщение (без перечисления команд)
     await update.message.reply_text(
         f"Привет, {user.first_name}!\n"
         "Я бот для выдачи конфигураций WireGuard VPN\n\n"
         "⚠️ Для работы бота необходимо:\n"
         "1. Начать приватный чат со мной (@KaratVpn_bot)\n"
-        "2. Не блокировать бота\n\n"
-        "Доступные команды:\n"
-        "/get - запросить конфиг (стандартная процедура)\n"
-        "/getfast - быстрая выдача (для менеджеров)",
+        "2. Не блокировать бота",
         reply_markup=reply_markup
     )
 
@@ -230,9 +269,11 @@ async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TY
 async def list_issued(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Команда для вывода списка выданных конфигов"""
     try:
-        logger.info(f"Запрос списка от пользователя {update.message.from_user.id}")
+        user_id = update.message.from_user.id
+        logger.info(f"Запрос списка от пользователя {user_id}")
         
-        if update.message.from_user.id != ADMIN_ID:
+        # Проверка прав администратора
+        if not is_admin(user_id):
             await update.message.reply_text("⚠️ Эта команда доступна только администратору")
             return
         
@@ -359,7 +400,7 @@ async def handle_delete_record(update: Update, context: ContextTypes.DEFAULT_TYP
         return
     
     # Проверяем, что команда от администратора
-    if update.message.from_user.id != ADMIN_ID:
+    if not is_admin(update.message.from_user.id):
         await update.message.reply_text("⚠️ Удаление записей доступно только администратору")
         context.user_data['awaiting_delete_id'] = False
         return
@@ -400,6 +441,7 @@ async def get_fast(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     configs = check_configs()
     if not configs:
+        # Изменение: не уведомляем администратора при отсутствии конфигов
         await update.message.reply_text("⚠️ Все ключи временно закончились!")
         return
     
@@ -453,6 +495,36 @@ async def get_fast(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "⚠️ Не удалось выдать конфиг. Попробуйте позже или обратитесь к администратору."
         )
 
+async def grant_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Команда для выдачи прав администратора"""
+    user = update.message.from_user
+    
+    # Проверка, что команду вызывает основной администратор
+    if user.id != ADMIN_ID:
+        await update.message.reply_text("⚠️ Эта команда доступна только главному администратору")
+        return
+    
+    await update.message.reply_text("Введите user_id пользователя, которому нужно выдать права администратора:")
+    return GRANT_ADMIN
+
+async def handle_grant_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Обработка выдачи прав администратора"""
+    try:
+        new_admin_id = int(update.message.text)
+        
+        if add_admin(new_admin_id):
+            await update.message.reply_text(f"✅ Пользователь {new_admin_id} теперь администратор!")
+        else:
+            await update.message.reply_text(f"⚠️ Пользователь {new_admin_id} уже является администратором")
+    
+    except ValueError:
+        await update.message.reply_text("⚠️ Пожалуйста, введите числовой user_id")
+    except Exception as e:
+        logger.error(f"Ошибка выдачи прав администратора: {e}")
+        await update.message.reply_text("⚠️ Произошла ошибка при выдаче прав")
+    
+    return ConversationHandler.END
+
 async def notify_admin(context: ContextTypes.DEFAULT_TYPE, message: str):
     """Уведомление администратора"""
     try:
@@ -465,6 +537,9 @@ async def notify_admin(context: ContextTypes.DEFAULT_TYPE, message: str):
 
 def main():
     """Запуск бота"""
+    # Инициализация файла администраторов
+    init_admins()
+    
     application = Application.builder().token(TOKEN).build()
     
     # Регистрация обработчиков
@@ -480,7 +555,17 @@ def main():
         fallbacks=[CommandHandler('cancel', cancel)]
     )
     
+    # Обработчик для выдачи прав администратора
+    admin_grant_handler = ConversationHandler(
+        entry_points=[CommandHandler('grant_admin', grant_admin)],
+        states={
+            GRANT_ADMIN: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_grant_admin)]
+        },
+        fallbacks=[]
+    )
+    
     application.add_handler(conv_handler)
+    application.add_handler(admin_grant_handler)
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("list", list_issued))
     application.add_handler(CommandHandler("getfast", get_fast))
